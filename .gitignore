@@ -1,0 +1,10 @@
+data/
+outputs/
+*.zip
+
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.cache/
