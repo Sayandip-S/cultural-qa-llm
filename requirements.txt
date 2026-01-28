@@ -1,0 +1,16 @@
+# Core
+numpy
+pandas
+tqdm
+
+# Hugging Face / LLM
+transformers>=4.41.0
+accelerate>=0.30.0
+peft>=0.11.0
+huggingface_hub>=0.23.0
+hf_transfer>=0.1.9
+sentencepiece
+safetensors
+
+# Optional but useful
+scikit-learn
