@@ -6,24 +6,42 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 MODEL_ID = "meta-llama/Meta-Llama-3-8B"
+MAX_ANSWER_CHARS = 89
+FALLBACK_ANSWER = "idk"
 
 def clean_answer(x: str) -> str:
     if not x:
         return ""
+
     x = x.strip()
-    # take first line only (avoid rambling)
+
+    # take first line only
     x = x.splitlines()[0].strip()
+
+    # If model starts giving JSON-like or "Answer: ..."
+    x = re.sub(r'^\s*(Answer\s*:\s*)', '', x, flags=re.IGNORECASE)
+
+    # If model gives multiple items separated by commas/semicolons/"and"/etc,
+    # keep only the first chunk (single-answer rule)
+    x = re.split(r",|;|\band\b|\bor\b|/|\\|\(|\)|\.\s", x, maxsplit=1)[0].strip()
+
     # remove wrapping quotes
     x = x.strip(' "\'')
+
     # remove trailing punctuation
-    x = re.sub(r"[.?!,:;]+$", "", x)
+    x = re.sub(r"[.?!,:;]+$", "", x).strip()
+
+    # hard char limit (Codabench constraint)
+    if len(x) > MAX_ANSWER_CHARS:
+        x = x[:MAX_ANSWER_CHARS].rstrip()
+
     return x
 
 def build_prompt(q: str) -> str:
-    # Keep it strict: one short answer, no explanation
     return (
-        "Answer the question with a short phrase (1-4 words). "
-        "No explanation. Output only the answer.\n\n"
+        "You are answering cultural QA.\n"
+        "Return EXACTLY ONE short answer (1 to 4 words).\n"
+        "No explanation. No list. No commas.\n"
         f"Question: {q}\n"
         "Answer:"
     )
@@ -51,6 +69,7 @@ def generate_answer(tok, model, prompt: str, device: str, max_new_tokens: int = 
         do_sample=False,          # baseline deterministic
         temperature=1.0,
         eos_token_id=tok.eos_token_id,
+        pad_token_id=tok.eos_token_id,
     )
     text = tok.decode(out[0], skip_special_tokens=True)
     tail = text[len(prompt):].strip() if text.startswith(prompt) else text
@@ -79,6 +98,11 @@ def main():
         q = row["en_question"]
         prompt = build_prompt(q)
         ans = generate_answer(tok, model, prompt, device=device)
+        ans = clean_answer(ans)
+
+        if not ans.strip():
+            ans = FALLBACK_ANSWER
+
         out_rows.append({"ID": qid, "answer": ans})
 
         if (i + 1) % 50 == 0:
