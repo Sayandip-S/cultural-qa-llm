@@ -19,7 +19,12 @@ FALLBACK_ANSWER = "idk"
 
 def normalize(s: str) -> str:
     s = (s or "").strip()
-    s = s.splitlines()[0].strip()
+    if not s:
+        return ""
+    lines = s.splitlines()
+    if not lines:
+        return ""
+    s = lines[0].strip()
     s = re.sub(r"^\s*(Answer\s*:\s*)", "", s, flags=re.IGNORECASE)
     s = re.split(r",|;|\band\b|\bor\b|/|\\|\(|\)|\.\s", s, maxsplit=1)[0].strip()
     s = s.strip(' "\'')
