@@ -2,7 +2,7 @@
 #SBATCH --job-name=val_prompt_v1
 #SBATCH --output=/data/horse/ws/sasr043g-cultural-qa-llm/logs/%x-%j.out
 #SBATCH --error=/data/horse/ws/sasr043g-cultural-qa-llm/logs/%x-%j.err
-#SBATCH --time=02:00:00
+#SBATCH --time=00:40:00
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
