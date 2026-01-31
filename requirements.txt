@@ -14,3 +14,4 @@ safetensors
 
 # Optional but useful
 scikit-learn
+datasets
